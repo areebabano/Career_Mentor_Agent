@@ -11,7 +11,7 @@ from openai.types.responses import ResponseTextDeltaEvent
 # Load environment variables (GEMINI_API_KEY)
 load_dotenv()
 gemini_api_key = os.getenv("GEMINI_API_KEY")
-print(f"API: {gemini_api_key}")
+# print(f"API: {gemini_api_key}")
 if not gemini_api_key:
     raise ValueError("❌ GEMINI_API_KEY missing in .env")
 
