@@ -150,7 +150,7 @@ if user_input and not st.session_state.is_processing:
                 save_progress(user_input, category, full_response)
 
             except Exception as e:
-                st.error(f"❌ Error: {str(e)}")
+                st.error(f"❗❌ Error: {str(e)}")
             finally:
                 st.session_state.is_processing = False
 
