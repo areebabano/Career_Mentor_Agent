@@ -1,158 +1,103 @@
-import streamlit as st
-import asyncio
+# import os
+# from dotenv import load_dotenv
+# import chainlit as cl
+# from agents import AsyncOpenAI, OpenAIChatCompletionsModel, Runner, RunConfig, set_tracing_disabled
+# from agentss.main_agent import CareerMentorAgent
+
+# # Load environment variables
+# load_dotenv()
+# set_tracing_disabled(True)
+
+# # Initialize API client and model
+# external_client = AsyncOpenAI(
+#     api_key=os.getenv("GEMINI_API_KEY"),
+#     base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+# )
+
+# model = OpenAIChatCompletionsModel(
+#     model="gemini-2.5-flash",
+#     openai_client=external_client,
+# )
+
+# config = RunConfig(
+#     model=model,
+#     model_provider=external_client,
+#     tracing_disabled=True
+# )
+
+# # Chainlit event: start of chat
+# @cl.on_chat_start
+# async def start():
+#     await cl.Message(content="👋 Welcome! Ask me anything about your career journey.").send()
+
+# # Chainlit event: user sends a message
+# @cl.on_message
+# async def main(message: cl.Message):
+#     user_input = message.content
+
+#     # Run your CareerMentorAgent synchronously with user input
+#     result = Runner.run_sync(CareerMentorAgent, user_input, run_config=config)
+
+#     # Send the agent's response back to Chainlit UI
+#     await cl.Message(content=result.final_output).send()
+
+# # Optional: Uncomment below if you want to test CLI run directly
+# # if __name__ == "__main__":
+# #     prompt = "I want to know what career paths are available in data analysis."
+# #     result = Runner.run_sync(CareerMentorAgent, prompt, run_config=config)
+# #     print("\n🧠 Final Result:\n", result.final_output)
+
+
 import os
-import json
-from datetime import datetime
-from dotenv import load_dotenv
-from openai import AsyncOpenAI
-from agents import Agent, OpenAIChatCompletionsModel, Runner, set_tracing_disabled
-from openai.types.responses import ResponseTextDeltaEvent
+from dotenv import load_dotenv  # Load environment variables from .env file
+import chainlit as cl           # Chainlit framework for chat UI
+from agents import AsyncOpenAI, OpenAIChatCompletionsModel, Runner, RunConfig, set_tracing_disabled
+from agentss.main_agent import CareerMentorAgent  # Your main agent coordinating career guidance
 
-# Load environment variables (GEMINI_API_KEY)
+# Load environment variables (like API keys)
 load_dotenv()
-gemini_api_key = os.getenv("GEMINI_API_KEY")
-# print(f"API: {gemini_api_key}")
-if not gemini_api_key:
-    raise ValueError("❌ GEMINI_API_KEY missing in .env")
 
-# Setup client & agent
-client = AsyncOpenAI(
-    api_key=gemini_api_key,
+# Disable internal tracing/logging for cleaner output (optional)
+set_tracing_disabled(True)
+
+# Initialize the OpenAI-compatible async client with Gemini API key and base URL
+external_client = AsyncOpenAI(
+    api_key=os.getenv("GEMINI_API_KEY"),  # Fetch API key from environment variables
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
 )
-set_tracing_disabled(disabled=True)
 
-agent = Agent(
-    name="Career Mentor",
-    instructions=(
-        "You are a professional and friendly career mentor. "
-        "Provide advice, quizzes, roadmaps, interview tips, resources, and scheduling help related only to careers. "
-        "If the user asks anything unrelated, politely remind them that you are a career mentor and "
-        "ask them to please ask career-related questions."
-    ),
-    model=OpenAIChatCompletionsModel(model="gemini-2.0-flash", openai_client=client),
+# Initialize the OpenAI chat model with the async client
+model = OpenAIChatCompletionsModel(
+    model="gemini-2.5-flash",  # Specify model version
+    openai_client=external_client,
 )
 
-def make_prompt(user_input: str, category: str) -> str:
-    templates = {
-        "Career Advice": f"User says: '{user_input}'. Provide detailed career advice with steps and skills.",
-        "Skill Assessment Quiz": f"User interested in '{user_input}'. Create a short 3-question quiz.",
-        "Career Roadmap": f"User wants to become '{user_input}'. Give detailed career roadmap.",
-        "Resume & Interview Tips": f"User preparing for '{user_input}' job. Give resume tips & 5 common interview Q&A.",
-        "Resources & Scheduling": f"User asks: '{user_input}'. Share courses, articles, videos, and help schedule reminders or tasks.",
-        "General Conversation": (
-            f"User says: '{user_input}'. Politely remind them you are a career mentor and can only answer career-related questions. "
-            "If the question is career-related, answer it thoroughly."
-        )
-    }
-    return templates.get(category, templates["Career Advice"])
-
-def save_progress(query, category, response):
-    file = "user_progress.json"
-    entry = {
-        "query": query,
-        "category": category,
-        "response_summary": response[:150],
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
-    }
-    try:
-        with open(file, "r") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        data = {"history": []}
-    data["history"].append(entry)
-    with open(file, "w") as f:
-        json.dump(data, f, indent=2)
-
-# Initialize session states
-if "history" not in st.session_state:
-    st.session_state.history = []
-if "is_processing" not in st.session_state:
-    st.session_state.is_processing = False
-if "chat_cleared" not in st.session_state:
-    st.session_state.chat_cleared = False
-
-# Streamlit config
-st.set_page_config(page_title="Career Mentor Agent", layout="wide")
-
-# Sidebar UI
-with st.sidebar:
-    st.markdown("""
-    <div style='text-align:center;'>
-        <img src='https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGxzanAyeTRub3prcDI0cTQ0dDR3bnQydHVoYmFpNGo3MTRqMzJ0ZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/58OujxlE7e19Mjv0gj/giphy.gif' width='180'/>
-        <h1 style='margin-top:5px;'>🎓 Career Mentor Agent</h1>
-        <p style='font-size:13px;color:gray;'>AI powered career guidance with quizzes, tips, resources & reminders</p>
-    </div>""", unsafe_allow_html=True)
-
-    st.markdown("---")
-    category = st.selectbox("Select Help Type:", [
-        "General Conversation",
-        "Career Advice",
-        "Skill Assessment Quiz",
-        "Career Roadmap",
-        "Resume & Interview Tips",
-        "Resources & Scheduling"
-    ])
-    st.markdown("---")
-
-    st.subheader("📋 Feedback")
-    rating = st.slider("Rate your session:", 1, 5, 3)
-    comment = st.text_area("Your feedback (optional)")
-    if st.button("Submit Feedback"):
-        st.success("🎉 Thanks for your feedback!")
-        # Optional: Save feedback to file or DB
-
-    st.markdown("---")
-    if st.button("Clear Chat"):
-        st.session_state.history = []
-        st.session_state.chat_cleared = True
-
-# Show message to refresh after clearing chat
-if st.session_state.chat_cleared:
-    st.info("Chat cleared! Please refresh the page (F5) to reset completely.")
-    st.stop()
-
-# Main Chat UI
-st.title("🎓 Career Mentor Agent 🌠")
-
-# Show chat history
-for msg in st.session_state.history:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-
-# Input box disabled during processing
-user_input = st.chat_input(
-    "Type your career goal or question here...",
-    disabled=st.session_state.is_processing
+# Configuration for running the agent, including model and client details
+config = RunConfig(
+    model=model,
+    model_provider=external_client,
+    tracing_disabled=True
 )
 
-if user_input and not st.session_state.is_processing:
-    st.session_state.history.append({"role": "user", "content": user_input})
-    with st.chat_message("user"):
-        st.markdown(user_input)
+# Chainlit event handler: triggered when chat session starts
+@cl.on_chat_start
+async def start():
+    # Send a welcome message to user in the chat UI
+    await cl.Message(content="👋 Welcome! Ask me anything about your career journey.").send()
 
-    with st.chat_message("assistant"):
-        placeholder = st.empty()
-        st.session_state.is_processing = True
+# Chainlit event handler: triggered when user sends a message
+@cl.on_message
+async def main(message: cl.Message):
+    user_input = message.content  # Extract text content from user message
 
-        async def stream_response():
-            try:
-                full_response = ""
-                prompt = make_prompt(user_input, category)
-                stream = Runner.run_streamed(agent, prompt)
+    # Run the CareerMentorAgent synchronously with user input and config
+    result = Runner.run_sync(CareerMentorAgent, user_input, run_config=config)
 
-                async for event in stream.stream_events():
-                    if event.type == "raw_response_event" and isinstance(event.data, ResponseTextDeltaEvent):
-                        full_response += event.data.delta
-                        placeholder.markdown(full_response + "▌")
+    # Send the agent's response back to the Chainlit chat interface
+    await cl.Message(content=result.final_output).send()
 
-                placeholder.markdown(full_response)
-                st.session_state.history.append({"role": "assistant", "content": full_response})
-                save_progress(user_input, category, full_response)
-
-            except Exception as e:
-                st.error(f"❗❌ Error: {str(e)}")
-            finally:
-                st.session_state.is_processing = False
-
-        asyncio.run(stream_response())
+# Optional CLI test block (commented out) to run the agent directly from terminal
+# if __name__ == "__main__":
+#     prompt = "I want to know what career paths are available in data analysis."
+#     result = Runner.run_sync(CareerMentorAgent, prompt, run_config=config)
+#     print("\n🧠 Final Result:\n", result.final_output)
