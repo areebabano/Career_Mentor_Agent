@@ -1,31 +1,31 @@
-
 🎯 Career Mentor Agent
 Welcome to the Career Mentor Agent — your AI-powered career advisor!
-It helps you explore career options, discover required skills, and understand potential job roles — all through intelligent conversation.
-Built using OpenAI Agents SDK, Gemini API, and Chainlit for a seamless interactive experience. 🚀
+It helps you:
+
+✅ Explore career options
+✅ Discover required skills
+✅ Understand potential job roles
+
+All through intelligent conversation powered by:
+🧠 OpenAI Agents SDK · 🪄 Gemini API · 🖥️ Chainlit (for interactive UI)
 
 ✨ Features
-🤖 Main Career Mentor Agent — routes queries to the right agent
-
-🧭 Career Agent — suggests career paths based on your interests
-
-🛠️ Skill Agent — provides skill roadmaps for each career
-
-💼 Job Agent — lists job titles related to your chosen field
-
-🧩 Tool Integration — uses a roadmap tool to fetch learning paths
-
-🔀 Automatic Handoff — intelligently switches between agents
-
-💬 Chainlit UI — chat with the mentor in a web interface
+Feature	Description
+🤖 Main Career Mentor Agent	Routes user queries to the right sub-agent
+🧭 Career Agent	Suggests career paths based on your interests
+🛠️ Skill Agent	Provides skill roadmaps for each career
+💼 Job Agent	Lists job titles related to your chosen field
+🧩 Tool Integration	Uses a roadmap tool to fetch relevant learning paths
+🔀 Automatic Handoff	Intelligently switches between agents
+💬 Chainlit UI	Chat with your career mentor in a web interface
 
 ⚙️ Getting Started
 🔐 Prerequisites
 Python 3.8+
 
-Gemini API key from Google Generative Language API
+Gemini API Key from Google Generative Language API
 
-Dependencies in requirements.txt
+All required dependencies (listed in requirements.txt)
 
 🛠️ Installation
 bash
@@ -35,19 +35,21 @@ git clone https://github.com/yourusername/career-mentor-agent.git
 cd career-mentor-agent
 pip install -r requirements.txt
 🔑 Environment Setup
-Create a .env file:
+Create a .env file in the root directory:
 
 env
 Copy
 Edit
 GEMINI_API_KEY=your_api_key_here
 🖥️ How to Use
-💻 Run in Terminal with Chainlit UI
+Run the application in your terminal:
+
 bash
 Copy
 Edit
 chainlit run main.py
-Then visit 👉 http://localhost:8000 to chat with your AI career mentor!
+Then open your browser and go to 👉 http://localhost:8000
+Start chatting with your AI career mentor! 🧑‍🏫✨
 
 🗂️ Project Structure
 bash
@@ -55,25 +57,26 @@ Copy
 Edit
 career-mentor-agent/
 │
-├── agentss/
+├── agents/
 │   ├── main_agent.py       # 🤖 CareerMentorAgent
 │   ├── career_agent.py     # 🧭 CareerAgent
 │   ├── skill_agent.py      # 🛠️ SkillAgent
 │   ├── job_agent.py        # 💼 JobAgent
 │
 ├── tools/
-│   └── roadmap.py          # 📚 Roadmap tool for skills
+│   └── roadmap.py          # 📚 Skill roadmap fetcher
 │
 ├── main.py                 # 🚀 App entry point
-├── .env                    # 🔐 Environment variables
-├── requirements.txt        # 📦 Dependencies
-└── README.md               # 📄 You’re reading it!
+├── .env                    # 🔐 API credentials
+├── requirements.txt        # 📦 Python dependencies
+└── README.md               # 📄 This file!
 🧠 How It Works
-🗣️ User asks a question (e.g. career advice, skills needed, or job roles).
+🗣️ User asks a question
+(e.g., "What jobs are there in AI?", "What skills do I need to be a frontend dev?")
 
-🤖 CareerMentorAgent processes the input and hands off to the appropriate sub-agent.
+🤖 CareerMentorAgent processes input
 
-🔀 Agent Handoff:
+🔀 Handoff to relevant sub-agent
 
 "I want to explore careers in AI" → 🧭 CareerAgent
 
@@ -81,12 +84,12 @@ career-mentor-agent/
 
 "What jobs are there in cybersecurity?" → 💼 JobAgent
 
-🧩 SkillAgent uses roadmap tool to fetch learning steps dynamically.
+🧩 SkillAgent uses roadmap tool to fetch learning path
 
-💬 Response is returned to the user in real-time.
+💬 Response is shown in real-time via Chainlit UI
 
 💬 Example Conversation
-pgsql
+plaintext
 Copy
 Edit
 👤 User: I want to explore a career in data science.
@@ -98,4 +101,4 @@ Edit
 👤 User: What are the job roles in cybersecurity?
 💼 JobAgent: Security Analyst, Pen Tester, SOC Analyst, and Security Engineer are popular roles.
 📄 License
-MIT License © 2025 Areeba Hammad
+MIT License © 2025 [Areeba Hammad]
